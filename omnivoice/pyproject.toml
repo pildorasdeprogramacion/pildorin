@@ -1,0 +1,24 @@
+[project]
+name = "pildorin-omnivoice"
+version = "1.0.0"
+description = "Servidor de voz de Pildorín con OmniVoice (opcional, necesita GPU NVIDIA)"
+requires-python = "==3.12.*"
+dependencies = [
+    # Las mismas versiones con las que se probó el servidor en el laboratorio.
+    "omnivoice==0.2.1",       # el modelo de voz (k2-fsa, Apache 2.0)
+    "torch==2.8.0",           # con CUDA 12.8, del índice de PyTorch (abajo)
+    "torchaudio==2.8.0",
+    "transformers==5.17.0",
+    "accelerate==1.15.0",
+    "numpy==2.5.3",
+]
+
+# torch y torchaudio con CUDA salen del índice de PyTorch, no de PyPI.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
+torchaudio = [{ index = "pytorch-cu128", marker = "sys_platform == 'win32' or sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

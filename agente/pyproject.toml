@@ -1,0 +1,18 @@
+[project]
+name = "pildorin"
+version = "1.0.0"
+description = "Pildorín, asistente de escritorio con Strands Agents y Ollama"
+requires-python = "==3.13.*"
+dependencies = [
+    "strands-agents",       # from strands import Agent, tool
+    "ollama",               # cliente de Ollama (OllamaModel lo usa por debajo)
+    "faster-whisper",       # oídos (STT)
+    "numpy",
+    "sounddevice",          # voz por el PC cuando el robot no está
+    "num2words",            # voz: cifras en palabras (evita el corte de OmniVoice)
+    "kokoro-onnx",          # voz de respaldo 1
+    "piper-tts",            # voz de respaldo 2
+    "paho-mqtt>=2.0",       # cuerpo: CallbackAPIVersion.VERSION2 exige 2.x
+    "reportlab",            # reporte PDF
+    "requests",             # telegram
+]

@@ -1,0 +1,7 @@
+ENERGIA_M1.wav / ENERGIA_M1.txt
+Tres frases del hablante 07508 (com_07508_00012641912, com_07508_01222360378,
+com_07508_01957145067) unidas con 0,25 s de silencio entre ellas.
+
+Fuente: OpenSLR 72, Crowdsourced high-quality Colombian Spanish speech data set.
+Copyright 2018, 2019 Google, Inc. Licencia CC BY-SA 4.0.
+https://www.openslr.org/72/

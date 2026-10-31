@@ -1,0 +1,22 @@
+# --- agente (Python) ---
+.venv/
+__pycache__/
+salida/
+pildoras.db
+.env
+agente/contactos.json
+agente/voces/*.onnx
+agente/voces/*.bin
+agente/voces/*.json
+agente/voces/*.parcial
+
+# --- omnivoice ---
+omnivoice/pildorin_voz.pt
+
+# --- firmware (PlatformIO) ---
+.pio/
+
+# --- editor y sistema ---
+.vscode/
+.DS_Store
+Thumbs.db

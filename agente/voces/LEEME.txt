@@ -1,0 +1,6 @@
+Aquí van las voces. Se bajan solas desde la carpeta agente con:
+
+    uv run descargar_voces.py
+
+    kokoro-v1.0.onnx, voices-v1.0.bin        Kokoro, la voz normal
+    es_MX-claude-high.onnx (+ .onnx.json)    Piper, por si Kokoro no carga
