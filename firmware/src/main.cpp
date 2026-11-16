@@ -14,7 +14,7 @@
 // Tiene que ser de 2,4 GHz. Pon aqui el nombre y la clave de TU red antes de grabar,
 // y no subas a GitHub tu clave real.
 const char* WIFI_SSID = "Pildorin";
-const char* WIFI_PASS = "cambia-esta-clave";
+const char* WIFI_PASS = "pildorin2026";
 
 // IP del computador (donde corren Mosquitto y el agente) y la IP fija del robot.
 // Elige las de tu caso (ver red/README.md):
@@ -46,7 +46,8 @@ const int   ROBOT_AUDIO_PORT = 5006;
 #define PIN_AMP_BCLK 10
 #define PIN_AMP_DIN  11
 
-// Servos SG90
+// Servos SG90. Izquierdo y derecho son los de Pildorin: su brazo izquierdo va en
+// la mitad blanca y su brazo derecho en la negra.
 #define PIN_SERVO_IZQ   17
 #define PIN_SERVO_DER   8
 #define CANAL_SERVO_IZQ 4
@@ -54,13 +55,14 @@ const int   ROBOT_AUDIO_PORT = 5006;
 #define BRAZO_MIN 20
 #define BRAZO_MAX 160
 
-// Ojos GC9A01 (SPI2)
+// Ojos GC9A01 (SPI2). Izquierdo y derecho son los de Pildorin: su ojo izquierdo es
+// el de la mitad blanca y su ojo derecho el de la mitad negra.
 #define PIN_TFT_SCLK 40
 #define PIN_TFT_MOSI 39
 #define PIN_TFT_DC   47
 #define PIN_TFT_RST  38
-#define CS_OJO_IZQ   21
-#define CS_OJO_DER   19
+#define CS_OJO_IZQ   21   // ojo izquierdo de Pildorin (mitad blanca)
+#define CS_OJO_DER   19   // ojo derecho de Pildorin (mitad negra)
 
 // Boca GC9A01 (SPI3, sin CS)
 #define PIN_BOCA_SCLK 1
@@ -208,8 +210,10 @@ static void ojoSonriente(lgfx::LovyanGFX &d, int cx, int cy, uint32_t c) {
   d.fillRect(cx - 65, cy + 10, 130, 60, TFT_BLACK);
 }
 
-void dibujarOjo(lgfx::LovyanGFX &d, Emocion e, bool cerrado, bool derecho, int cx = 108, int cy = 108) {
-  const int s = derecho ? -1 : 1;
+// aTuDerecha: el ojo que ves a tu derecha cuando miras a Pildorin de frente (su ojo
+// izquierdo). Ese se dibuja en espejo, para que los dos ojos queden simetricos.
+void dibujarOjo(lgfx::LovyanGFX &d, Emocion e, bool cerrado, bool aTuDerecha, int cx = 108, int cy = 108) {
+  const int s = aTuDerecha ? -1 : 1;
   const uint32_t color = TFT_CYAN;
   d.fillScreen(TFT_BLACK);
 
@@ -233,8 +237,8 @@ void dibujarOjo(lgfx::LovyanGFX &d, Emocion e, bool cerrado, bool derecho, int c
       break;
 
     case GUINO:
-      if (derecho) ojoSonriente(d, cx, cy, color);
-      else         ojoAbierto(d, cx, cy, color);
+      if (aTuDerecha) ojoSonriente(d, cx, cy, color);
+      else            ojoAbierto(d, cx, cy, color);
       break;
 
     case TRISTE:
@@ -249,7 +253,7 @@ void dibujarOjo(lgfx::LovyanGFX &d, Emocion e, bool cerrado, bool derecho, int c
 
     case DORMIDO:
       d.fillRoundRect(cx - 60, cy - 6, 120, 12, 6, color);
-      if (derecho) {
+      if (aTuDerecha) {
         d.setTextColor(color);
         d.setTextDatum(textdatum_t::middle_center);
         d.setFont(&fonts::FreeSansBold12pt7b);
@@ -280,13 +284,14 @@ void dibujarOjo(lgfx::LovyanGFX &d, Emocion e, bool cerrado, bool derecho, int c
 }
 
 void pintarOjos(Emocion e, bool cerrado) {
+  // El ojo izquierdo de Pildorin es el que ves a tu derecha: ese va en espejo (true).
   if (!spritesOk) {
-    dibujarOjo(ojoIzq, e, cerrado, false, 120, 120);
-    dibujarOjo(ojoDer, e, cerrado, true,  120, 120);
+    dibujarOjo(ojoIzq, e, cerrado, true,  120, 120);
+    dibujarOjo(ojoDer, e, cerrado, false, 120, 120);
     return;
   }
-  dibujarOjo(lienzoIzq, e, cerrado, false);
-  dibujarOjo(lienzoDer, e, cerrado, true);
+  dibujarOjo(lienzoIzq, e, cerrado, true);
+  dibujarOjo(lienzoDer, e, cerrado, false);
   for (int y = 0; y < OJO_LADO; y += OJO_FRANJA) {
     ojoIzq.setClipRect(OJO_OFF, OJO_OFF + y, OJO_LADO, OJO_FRANJA);
     lienzoIzq.pushSprite(&ojoIzq, OJO_OFF, OJO_OFF);
@@ -375,9 +380,10 @@ void initPantallas() {
   Serial.println("Init boca (SPI3)...");
   boca.init();
 
-  ojoIzq.setRotation(3);   // conector a la izquierda
-  ojoDer.setRotation(1);   // conector a la derecha
-  boca.setRotation(3);     // conector a la izquierda
+  // Cada pantalla se gira segun hacia donde apunta su conector, mirando a Pildorin de frente.
+  ojoIzq.setRotation(1);   // su ojo izquierdo (mitad blanca): conector a tu derecha
+  ojoDer.setRotation(3);   // su ojo derecho (mitad negra): conector a tu izquierda
+  boca.setRotation(3);     // boca: conector hacia la mitad negra, a tu izquierda
 
   for (auto *sp : { &lienzoIzq, &lienzoDer }) {
     sp->setPsram(true);

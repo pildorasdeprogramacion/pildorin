@@ -135,7 +135,7 @@ Al arrancar, cada paso dice qué modelo usa, por ejemplo `Modelo: gpt-oss:20b (o
 
 **Paso 4.** Lee la base de datos. Prueba "¿qué cursos tenemos?", "¿cuánto llevamos vendido este mes?" o "¿quién compró el curso de Strands?". Pídele que registre una venta: todavía no tiene esa tool y te lo dice.
 
-**Paso 5.** Ahora también escribe. Prueba "registra una venta del curso de Python para María López, su correo es maria arroba correo punto com" y después "arma el reporte del mes y mándaselo a Pepe". El correo de Pepe no lo dictas: Pildorín lo busca en los [contactos](#contactos). En un mismo turno encadena varias tools. El PDF queda en `paso5_escritura_pdf_correo/salida/`. Si no configuraste el correo, el mensaje queda en esa misma carpeta como `correo.eml` y lo abres con doble clic.
+**Paso 5.** Ahora también escribe. Prueba "registra una venta del curso de Python para María López, su correo es maria arroba gmail punto com" y después "arma el reporte del mes y mándaselo a Pepe". El correo dictado queda bien escrito en la base (`maria@gmail.com`): si Whisper entiende mal el dominio ("jotmail", "gmail punto con"), se cambia por el más parecido, y si no queda un correo válido, Pildorín pide que lo repitas. El correo de Pepe no lo dictas: Pildorín lo busca en los [contactos](#contactos). En un mismo turno encadena varias tools. El PDF queda en `paso5_escritura_pdf_correo/salida/`. Si no configuraste el correo, el mensaje queda en esa misma carpeta como `correo.eml` y lo abres con doble clic. Para que salga de verdad, o para pedir "envíamelo a mí", llena el [correo en tu `.env`](#correo-con-gmail) y corre el paso con `uv run --env-file ../.env main.py --sin-robot`: sin `--env-file`, el programa no lee el `.env`.
 
 **Paso 6.** Todo lo anterior y además Telegram: escríbele o mándale una nota de voz a tu bot, o pídele en voz alta "mándame el reporte por Telegram". Antes tienes que configurar el bot (ver abajo).
 
@@ -289,7 +289,7 @@ Google muestra la contraseña de aplicación en grupos de cuatro letras: pégala
 
 Cuando dices "mándaselo a Pepe", Pildorín busca el correo de Pepe en `agente/contactos.json`, así no tienes que dictar la dirección. Basta con una parte del nombre: "María" encuentra a "María López". Si coinciden dos, Pildorín pregunta a cuál.
 
-Pildorín solo le escribe a tus contactos y a ti ("mándamelo a mí" va a `CORREO_YO`). Si le dictas una dirección, te pide que la agregues a los contactos: así, si entiende mal una dirección, el correo nunca le llega a otra persona.
+Pildorín solo le escribe a tus contactos y a ti. Tu correo no va en los contactos: "mándamelo a mí" va a `CORREO_YO`, en el `.env`. Si le dictas una dirección, te pide que la agregues a los contactos: así, si entiende mal una dirección, el correo nunca le llega a otra persona.
 
 Si ese archivo no existe, usa `contactos.ejemplo.json`, que trae a Pepe y a María López con correos `@example.com`: un dominio reservado para ejemplos, que no le llega a nadie. Para poner contactos de verdad:
 
@@ -379,7 +379,9 @@ El laboratorio está probado con gpt-oss:20b; con un modelo más pequeño cambia
 
 **"Ventas de este mes" sale vacío.** Las ventas de ejemplo son del mes en que se creó la base. Corre `uv run crear_db.py` en la carpeta del paso.
 
-**El correo no sale.** Sin `SMTP_USER` y `SMTP_PASS` el correo no se envía: queda en `salida/correo.eml`. Con Gmail, `SMTP_PASS` tiene que ser una contraseña de aplicación, pegada sin espacios.
+**El correo no sale, o Pildorín dice que no sabe tu correo, aunque llenaste el `.env`.** Corriste el paso sin `--env-file ../.env`, y sin eso el programa no lee el `.env`: el correo queda en `salida/correo.eml` y "envíamelo a mí" no tiene a dónde ir. Córrelo con `uv run --env-file ../.env main.py --sin-robot`.
+
+**"El servidor rechazó usuario o contraseña".** Con Gmail, `SMTP_PASS` tiene que ser una contraseña de aplicación, pegada sin espacios ([Correo con Gmail](#correo-con-gmail)).
 
 **"No tengo a … en los contactos".** Ese nombre no está en `agente/contactos.json`, o todavía no lo creaste y Pildorín está usando el de ejemplo, que solo tiene a Pepe y a María López ([Contactos](#contactos)).
 

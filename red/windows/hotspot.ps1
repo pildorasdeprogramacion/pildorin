@@ -4,17 +4,18 @@
     WinRT NetworkOperatorTetheringManager. No usa netsh wlan hostednetwork.
 
 .DESCRIPTION
-    Comparte la conexion a internet activa en ese momento, con SSID / clave /
-    banda fijos. Verifica que la interfaz del hotspot recibe 192.168.137.1 y que
-    el equipo conserva salida a internet.
+    Comparte la conexion a internet activa en ese momento, en 2,4 GHz, con el
+    nombre y la clave de la red del robot. Verifica que la interfaz del hotspot
+    recibe 192.168.137.1 y que el equipo conserva salida a internet.
 
 .EXAMPLE
     .\hotspot.ps1
-    Enciende el hotspot "Pildorin" en 2,4 GHz.
+    Enciende el hotspot con WIFI_SSID y WIFI_PASS de firmware/src/main.cpp,
+    la misma red que busca el robot.
 
 .EXAMPLE
-    .\hotspot.ps1 -Passphrase 'tu-clave-de-8-o-mas'
-    Usa otra clave (la misma de WIFI_PASS en firmware/src/main.cpp).
+    .\hotspot.ps1 -Ssid 'OtraRed' -Passphrase 'otra-clave-de-8-o-mas'
+    Usa otra red en vez de la de main.cpp.
 
 .EXAMPLE
     .\hotspot.ps1 -Off
@@ -22,8 +23,8 @@
 #>
 [CmdletBinding()]
 param(
-    [string] $Ssid       = 'Pildorin',
-    [string] $Passphrase = 'cambia-esta-clave',
+    [string] $Ssid,
+    [string] $Passphrase,
 
     [string] $ExpectedIP = '192.168.137.1',
 
@@ -31,6 +32,25 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Sin -Ssid / -Passphrase, la red sale de la seccion CONFIG del firmware
+# (WIFI_SSID y WIFI_PASS en firmware/src/main.cpp): asi el hotspot y el robot
+# siempre tienen el mismo nombre y la misma clave.
+if (-not $Off -and (-not $Ssid -or -not $Passphrase)) {
+    $mainCpp = Join-Path $PSScriptRoot '..\..\firmware\src\main.cpp'
+    if (-not (Test-Path $mainCpp)) {
+        throw "No encuentro $mainCpp. Pasa la red a mano: -Ssid 'Pildorin' -Passphrase 'tu-clave'"
+    }
+    $cpp = Get-Content -Raw $mainCpp
+    if (-not $Ssid)       { $Ssid       = [regex]::Match($cpp, 'WIFI_SSID\s*=\s*"([^"]*)"').Groups[1].Value }
+    if (-not $Passphrase) { $Passphrase = [regex]::Match($cpp, 'WIFI_PASS\s*=\s*"([^"]*)"').Groups[1].Value }
+    if (-not $Ssid -or -not $Passphrase) {
+        throw "No pude leer WIFI_SSID y WIFI_PASS en $mainCpp."
+    }
+    if ($Passphrase -eq 'cambia-esta-clave') {
+        Write-Host "Aviso: main.cpp tiene la clave de ejemplo. El robot solo entra si su firmware se grabo con esa misma clave." -ForegroundColor Yellow
+    }
+}
 
 # ---------------------------------------------------------------------------
 # 1. Tipos WinRT + puente async (IAsyncOperation / IAsyncAction -> Task)
@@ -161,7 +181,7 @@ $bandTexto = switch ("$($final.Band)") {
 Write-Host ''
 Write-Host '==================== PUNTO DE ACCESO MOVIL ====================' -ForegroundColor Cyan
 '{0,-20}: {1}' -f 'SSID',                $final.Ssid
-'{0,-20}: {1}' -f 'Clave',               $Passphrase
+'{0,-20}: {1}' -f 'Clave',               ('*' * $Passphrase.Length)
 '{0,-20}: {1} ({2})' -f 'Banda',         $bandTexto, $final.Band
 '{0,-20}: {1}' -f 'Autenticacion',       $final.AuthenticationKind
 '{0,-20}: {1}' -f 'Estado hotspot',      $manager.TetheringOperationalState

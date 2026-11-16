@@ -18,7 +18,7 @@ Esta guía es solo para el robot o la protoboard. Sin robot no necesitas nada de
 
 | Archivo | Para qué |
 |---|---|
-| `mosquitto.conf` | las dos líneas que Mosquitto necesita para aceptar al robot. En macOS y Linux se copia tal cual; en Windows se agregan con un comando (sección 2) |
+| `mosquitto.conf` | las dos líneas que Mosquitto necesita para aceptar al robot. En macOS y Linux se copia tal cual; en Windows se agregan con PowerShell (sección 2) |
 | `windows/hotspot.ps1` | crea el hotspot en Windows. En Linux basta un comando (`nmcli`, sección 4) y macOS no tiene uno: se hace desde Configuración del Sistema (sección 3) |
 
 Los pasos de Mosquitto para cada sistema están en su sección: [Windows](#2-windows), [macOS](#3-macos) y [Linux](#4-linux-ubuntu-o-debian).
@@ -59,10 +59,10 @@ Para elegir la del robot, toma la misma red y termínala en 200 (si tu computado
 
 ```powershell
 cd red\windows
-powershell -ExecutionPolicy Bypass -File .\hotspot.ps1 -Passphrase "la-misma-clave-de-WIFI_PASS"
+powershell -ExecutionPolicy Bypass -File .\hotspot.ps1
 ```
 
-El informe final tiene que decir `Banda: 2,4 GHz` e `IP del hotspot: 192.168.137.1 … -> OK`. Para apagarlo:
+El nombre y la clave los toma de `WIFI_SSID` y `WIFI_PASS` en `firmware/src/main.cpp`, la misma red que busca el robot; en el informe la clave sale con asteriscos. Para usar otra red, agrégale `-Ssid "OtraRed" -Passphrase "otra-clave"`. El informe final tiene que decir `Banda: 2,4 GHz` e `IP del hotspot: 192.168.137.1 … -> OK`. Para apagarlo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\hotspot.ps1 -Off
@@ -75,15 +75,25 @@ En los dos casos, en esa misma pantalla **desactiva el ahorro de energía**: esa
 ### Mosquitto
 
 1. Instálalo con el instalador de https://mosquitto.org/download/ o con `winget install EclipseFoundation.Mosquitto`. Queda como un servicio de Windows que arranca solo, pero de entrada solo acepta conexiones del mismo computador.
-2. Abre PowerShell como administrador (clic derecho en el botón de Inicio > **Terminal (Administrador)** en Windows 11, o **Windows PowerShell (administrador)** en Windows 10) y corre estas tres líneas **una sola vez**:
+2. Abre PowerShell como administrador (clic derecho en el botón de Inicio > **Terminal (Administrador)** en Windows 11, o **Windows PowerShell (administrador)** en Windows 10) y corre estas líneas:
 
    ```powershell
-   Add-Content -Path "C:\Program Files\mosquitto\mosquitto.conf" -Value "`nlistener 1883`nallow_anonymous true"
-   Restart-Service -DisplayName "Mosquitto Broker"
-   New-NetFirewallRule -DisplayName "Pildorin (MQTT y microfono)" -Direction Inbound -Protocol TCP -LocalPort 1883,5005 -Action Allow
+   $conf = "C:\Program Files\mosquitto\mosquitto.conf"
+   $resto = Get-Content $conf | Where-Object { $_ -notmatch "^\s*(listener|port|bind_address|allow_anonymous)\b" }
+   Set-Content -Path $conf -Value (@($resto) + "listener 1883" + "allow_anonymous true") -Encoding ascii
+   Set-Service -Name mosquitto -StartupType Automatic
+   Restart-Service -Name mosquitto
+   Remove-NetFirewallRule -DisplayName "Pildorin (MQTT y microfono)" -ErrorAction SilentlyContinue
+   New-NetFirewallRule -DisplayName "Pildorin (MQTT y microfono)" -Direction Inbound -Protocol TCP -LocalPort 1883,5005 -Action Allow | Out-Null
+   Get-Service mosquitto | Select-Object Status, StartType
    ```
 
-   La primera deja que el robot se conecte al broker, la segunda reinicia el servicio con ese cambio y la tercera abre en el firewall los puertos de MQTT (1883) y del micrófono del robot (5005).
+   - **Las tres primeras** dejan en `mosquitto.conf` las dos líneas que necesita el robot, `listener 1883` y `allow_anonymous true`, una sola vez: si el archivo ya tenía un `listener`, lo reemplazan, porque con dos Mosquitto no arranca.
+   - **La cuarta** deja el servicio en arranque automático: si está deshabilitado, Windows no lo deja arrancar. **La quinta** lo reinicia con el cambio.
+   - **La sexta y la séptima** abren en el firewall los puertos de MQTT (1883) y del micrófono del robot (5005); antes borran la regla si ya existía, para no duplicarla.
+   - **La última** muestra el servicio: tiene que decir `Running` y `Automatic`.
+
+   Si las vuelves a correr, no se daña nada: quedan igual.
 3. La primera vez que corras el agente con robot, Windows puede preguntar si Python puede usar la red: dale **Permitir acceso**.
 
 ### Prueba
@@ -116,7 +126,7 @@ Con [Homebrew](https://brew.sh), desde la carpeta del repositorio:
 
 ```bash
 brew install mosquitto
-cat red/mosquitto.conf >> "$(brew --prefix)/etc/mosquitto/mosquitto.conf"
+grep -q "^listener 1883" "$(brew --prefix)/etc/mosquitto/mosquitto.conf" || cat red/mosquitto.conf >> "$(brew --prefix)/etc/mosquitto/mosquitto.conf"
 brew services restart mosquitto
 ```
 
@@ -192,6 +202,11 @@ Después corre los pasos del agente sin `--sin-robot` ([agente/README.md](../age
 **Pildorín contesta por los parlantes del computador y no por el robot.** En la consola sale `(robot no disponible: …)`. `PILDORIN_ROBOT_IP` no es la IP del robot (la de `ROBOT_IP` en `main.cpp`), o el robot no está en la red.
 
 **`mosquitto_pub` mueve al robot, pero el agente no.** Mira en la consola si el agente llamó la tool (`-> tool mover_brazos(...)`). Si la llamó, deja corriendo `mosquitto_sub` para ver si el comando llega al broker.
+
+**Windows: `Restart-Service` dice que no puede iniciar el servicio.** PowerShell no dice por qué. Para ver el código de error de Windows, corre `sc.exe start mosquitto` (con `.exe`: en PowerShell, `sc` es otro comando):
+
+- **`1058`**: el servicio está deshabilitado. Vuelve a correr las líneas de la [sección 2](#mosquitto), que lo dejan en arranque automático.
+- **`1067`**: Mosquitto arranca y se cierra. Córrelo a mano para ver el error, con el comando de la entrada siguiente. Si el error dice que el puerto ya está en uso, hay otro Mosquitto abierto en otra terminal: ciérralo. Si es otro error, vuelve a correr las líneas de la sección 2, que arreglan `mosquitto.conf`.
 
 **Windows: `Restart-Service` no encuentra el servicio.** Instalaste Mosquitto sin el servicio. Córrelo a mano y deja esa terminal abierta mientras trabajas:
 

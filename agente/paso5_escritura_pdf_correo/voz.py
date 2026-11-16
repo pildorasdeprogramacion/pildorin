@@ -63,7 +63,7 @@ KOKORO_VELOCIDAD = 0.92
 # Normalizacion: el pico de cada trozo se lleva a este nivel (0.0 - 1.0).
 PICO_OBJETIVO = 0.99
 GANANCIA_MAX = 12.0                # tope, para no amplificar silencios
-GANANCIA_EXTRA = 1.8               # limitador suave: 1.0 = apagado, 3.0 = muy fuerte
+GANANCIA_EXTRA = 3.0               # limitador suave: sube la voz sin pasar del maximo (1.0 = apagado; 4.0 ya suena aspero)
 COLA_SILENCIO_S = 0.5              # silencio al final: protege la ultima silaba
 
 MAX_CARACTERES_POR_TROZO = 200     # se sintetiza y se envia por partes

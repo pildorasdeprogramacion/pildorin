@@ -116,9 +116,13 @@ def registrar_venta(curso: str, cliente: str, correo_cliente: str) -> str:
     Args:
         curso: nombre (o parte del nombre) del curso vendido.
         cliente: nombre de la persona que compró.
-        correo_cliente: correo de la persona que compró.
+        correo_cliente: correo de la persona que compró, tal como lo dijo el usuario
+            (por ejemplo "maria arroba gmail punto com"); la tool lo deja bien escrito.
     """
     log_tool("registrar_venta", curso=curso, cliente=cliente, correo_cliente=correo_cliente)
+    correo_cliente = correo.correo_dictado(correo_cliente)
+    if not correo.VALIDO.match(correo_cliente):
+        return f"No registré la venta: no entendí el correo ('{correo_cliente}'). Pide que lo repitan."
     fila = db.obtener_uno(
         "SELECT id, nombre, precio FROM cursos WHERE lower(nombre) LIKE ?",
         (f"%{curso.lower()}%",),
@@ -129,7 +133,8 @@ def registrar_venta(curso: str, cliente: str, correo_cliente: str) -> str:
         "INSERT INTO ventas (curso_id, cliente, correo, monto, fecha) VALUES (?, ?, ?, ?, ?)",
         (fila["id"], cliente, correo_cliente, fila["precio"], date.today().isoformat()),
     )
-    return f"Venta #{venta_id} registrada: {cliente} compró '{fila['nombre']}' por {fila['precio']:.0f} USD"
+    return (f"Venta #{venta_id} registrada: {cliente} ({correo_cliente}) compró "
+            f"'{fila['nombre']}' por {fila['precio']:.0f} USD")
 
 
 # ---------- reporte y correo ----------
@@ -152,10 +157,11 @@ def enviar_correo(destinatario: str, asunto: str, cuerpo: str, adjunto: str = ""
     destinatario: el nombre del contacto tal como lo dijo el usuario ("Pepe", "María");
     la tool busca su correo. Si dice "envíamelo", "a mi correo" o "a mí", pasa "yo"."""
     log_tool("enviar_correo", destinatario=destinatario, asunto=asunto, adjunto=adjunto)
-    if destinatario.strip().lower() in ("yo", "mi correo", "mí"):
+    if correo.es_para_mi(destinatario):
         direccion = os.getenv("CORREO_YO", "")
         if not direccion:
-            return "No sé cuál es tu correo: falta la variable CORREO_YO."
+            return ("No sé cuál es tu correo: falta la variable CORREO_YO. "
+                    "Ponla en agente/.env y corre el paso con --env-file ../.env.")
     elif "@" in destinatario or "arroba" in destinatario.lower():
         return "Solo le escribo a contactos: pide que agreguen esa dirección a agente/contactos.json con un nombre."
     else:

@@ -18,6 +18,13 @@ Guía para compilar el firmware de Pildorín y grabarlo en el ESP32-S3, en Windo
 - Cable USB-C **de datos** (los cables que solo cargan no sirven para grabar).
 - ESP32-S3 DevKitC **N16R8** (16 MB de flash, 8 MB de PSRAM).
 
+**Izquierdo y derecho son los de Pildorín**, no los de quien lo mira de frente. Su ojo izquierdo y su brazo izquierdo van en la mitad blanca, y los derechos en la negra:
+
+| Lado de Pildorín | Mitad | Ojo (CS) | Brazo (servo) |
+|---|---|---|---|
+| Izquierdo | blanca | GPIO 21 | GPIO 17 |
+| Derecho | negra | GPIO 19 | GPIO 8 |
+
 Los archivos ya están en esta carpeta:
 
 | Archivo | Qué es |
@@ -166,5 +173,6 @@ No uses TFT_eSPI: en este ESP32-S3 se cae con *Guru Meditation* al iniciar las p
 | Cara de dormido y LED morado que no cambian | El robot no ve la red: que sea de 2,4 GHz y que el nombre y la clave sean los de `WIFI_SSID` y `WIFI_PASS` en `main.cpp`. Más detalle en [red/README.md](../red/README.md). El robot reintenta solo cada 10 s. |
 | LED amarillo | Falta el broker MQTT o el robot no lo alcanza: [red/README.md](../red/README.md). |
 | Una pantalla queda en blanco | Revisa la alimentación y los cables de esa pantalla. |
+| Los ojos salen de cabeza (los corazones con la punta hacia arriba) | Los ojos están cruzados: el CS del GPIO 21 va al ojo de la mitad blanca (el izquierdo de Pildorín) y el del GPIO 19 al de la negra. Intercambia los conectores de los dos ojos. |
 
 Fuentes: [PlatformIO IDE para VS Code](https://docs.platformio.org/en/stable/integration/ide/vscode.html) · [reglas udev de PlatformIO](https://docs.platformio.org/en/stable/core/installation/udev-rules.html)
