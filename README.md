@@ -2,7 +2,9 @@
 
 Pildorín es un asistente de escritorio con forma de píldora: escucha, habla, cambia la cara, mueve los brazos, consulta ventas, arma reportes en PDF, manda correos y contesta por Telegram. El cerebro es un agente hecho con Strands Agents; el cuerpo, un ESP32-S3 con tres pantallas redondas, micrófono, parlante y dos servos.
 
-Aquí está todo para armarlo: el agente, el firmware del robot y la configuración de la red, para Windows, macOS y Linux.
+Aquí está todo para armarlo: el agente, el firmware del robot, la configuración de la red y los planos de la carcasa, para Windows, macOS y Linux.
+
+**Pildorín en 3D: [pildorasdeprogramacion.github.io/pildorin](https://pildorasdeprogramacion.github.io/pildorin/)**. En la pestaña Placa está el pinout y el armado paso a paso de la placa perforada (o la protoboard), las pruebas con multímetro y cómo conectar cada módulo con cables Dupont. En la pestaña Carcasa, dónde va cada componente dentro de la píldora.
 
 ## Tres formas de hacer el laboratorio
 
@@ -22,6 +24,8 @@ El modelo puede correr en tu computador con Ollama (gpt-oss:20b, pide 16 GB de R
 | [`firmware/`](firmware/README.md) | El programa del ESP32-S3: ojos, boca, brazos, micrófono, parlante, Wi-Fi y MQTT | VS Code con PlatformIO |
 | [`red/`](red/README.md) | Cómo se conectan el robot y el computador: hotspot o router, y el broker Mosquitto | Mosquitto |
 | [`omnivoice/`](omnivoice/README.md) | Opcional: el servidor de voz con emociones (risas, suspiros) que usa el agente | uv, tarjeta NVIDIA |
+| [`planos-3d/`](planos-3d/README.md) | Los STL de la carcasa v7 (dos mitades y dos brazos) para imprimir | Cura o tu slicer |
+| [`docs/`](https://pildorasdeprogramacion.github.io/pildorin/) | Pildorín en 3D: placa con pinout, paso a paso, pruebas, conexiones y carcasa | El navegador |
 
 ## Preparar todo para el robot
 
